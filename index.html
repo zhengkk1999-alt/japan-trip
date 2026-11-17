@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>日本冬日小旅行</title>
+<meta name="theme-color" content="#fbf6f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15141d" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="日本小旅行">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: one-column pocket app — sticky top bar, five-tab dock fixed at the bottom; each trip day is drawn as a Japanese station sign (駅名標), finished days get a vermilion 済 stamp */
+:root{
+  --paper:#fbf6f3; --card:#ffffff; --sunk:#f4ede9; --ink:#2a2438; --ink2:#6f677f; --line:#ebe1e1;
+  --sakura:#d95d88; --sakura-soft:#fce7ee; --ai:#34407e; --ai-soft:#e7eaf6; --shu:#d4442a; --matcha:#5c8a52; --yuzu:#c98a12; --on-accent:#ffffff;
+  --l-osaka:#e5672e; --l-kyoto:#8a5cc0; --l-nara:#9a6b38; --l-fuji:#2c8bb4; --l-tokyo:#3f9a45; --l-rinku:#1f9e9a; --l-kix:#c9971a;
+  --font-ui:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;
+  --font-jp:"Zen Maru Gothic","Hiragino Maru Gothic ProN","PingFang SC","Noto Sans JP",sans-serif;
+  --r:16px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#15141d; --card:#1f1d2a; --sunk:#191823; --ink:#f1ecf3; --ink2:#a8a1b6; --line:#302c3e;
+  --sakura:#f08bae; --sakura-soft:#3a2231; --ai:#a8b3f2; --ai-soft:#262b4a; --shu:#ff6d50; --matcha:#8fc485; --yuzu:#f0bd55; --on-accent:#ffffff;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#15141d; --card:#1f1d2a; --sunk:#191823; --ink:#f1ecf3; --ink2:#a8a1b6; --line:#302c3e;
+  --sakura:#f08bae; --sakura-soft:#3a2231; --ai:#a8b3f2; --ai-soft:#262b4a; --shu:#ff6d50; --matcha:#8fc485; --yuzu:#f0bd55; --on-accent:#ffffff;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;padding-top:env(safe-area-inset-top,0px);background:var(--paper);color:var(--ink);font:15px/1.55 var(--font-ui)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+a{color:inherit}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ai) 55%,transparent);outline-offset:2px;border-radius:8px}
+.num{font-family:var(--font-jp);font-variant-numeric:tabular-nums}
+.jp{font-family:var(--font-jp)}
+.muted{color:var(--ink2)}
+.fine{font-size:12px;color:var(--ink2);line-height:1.6;margin:0}
+
+.app{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:0 calc(92px + env(safe-area-inset-bottom,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;margin-inline:-16px;padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.eyebrow{font-size:10.5px;letter-spacing:.16em;font-weight:700;color:var(--sakura)}
+.brand{font-weight:800;font-size:17px;letter-spacing:.02em}
+.sync{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 11px;font-size:12px;font-weight:600;color:var(--ink2)}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--ink2)}
+.sync.ok i{background:var(--matcha)} .sync.warn i{background:var(--yuzu)}
+
+.view{display:flex;flex-direction:column;gap:14px;padding-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 10px}
+.h h2{font-size:16px;margin:0;font-weight:800}
+.h .fine{text-align:right}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;border-radius:12px;border:1px solid var(--line);background:var(--card);padding:9px 14px;font-weight:700;font-size:14px;text-decoration:none}
+.btn.pri{background:var(--sakura);border-color:var(--sakura);color:var(--on-accent)}
+.btn.soft{background:var(--sakura-soft);border-color:transparent;color:var(--sakura)}
+.btn.wide{width:100%}
+.btn.sm{min-height:34px;padding:6px 10px;font-size:12.5px;border-radius:10px}
+.btn.armed{background:var(--shu);border-color:var(--shu);color:var(--on-accent)}
+
+/* Home: boarding-pass countdown */
+.pass{position:relative;background:var(--ai);color:var(--on-accent);border-radius:20px;padding:18px 18px 16px;overflow:hidden}
+.pass::before,.pass::after{content:"";position:absolute;top:calc(100% - 64px);width:22px;height:22px;border-radius:50%;background:var(--paper)}
+.pass::before{left:-11px}.pass::after{right:-11px}
+.pass .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.pass .lbl{font-size:10.5px;letter-spacing:.16em;opacity:.75;font-weight:700}
+.pass .big{font-family:var(--font-jp);font-weight:900;font-size:64px;line-height:1;letter-spacing:-.02em;margin-top:6px}
+.pass .big small{font-size:20px;font-weight:700;margin-left:6px;letter-spacing:0}
+.pass .sub{font-size:13.5px;opacity:.9;margin-top:6px}
+.pass .code{font-family:var(--font-jp);font-weight:900;font-size:26px;text-align:right;line-height:1}
+.pass .code span{display:block;font-size:11px;font-weight:500;opacity:.75;margin-top:4px;letter-spacing:.04em}
+.pass .perf{border-top:2px dashed color-mix(in srgb,var(--on-accent) 35%,transparent);margin:18px -18px 12px}
+.pass .foot{display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.9}
+.pass .prog{height:6px;border-radius:6px;background:color-mix(in srgb,var(--on-accent) 22%,transparent);margin-top:12px;overflow:hidden}
+.pass .prog b{display:block;height:100%;background:var(--on-accent);border-radius:6px}
+
+.next .when{display:inline-block;font-family:var(--font-jp);font-weight:700;font-size:13px;background:var(--ai-soft);color:var(--ai);border-radius:8px;padding:3px 8px}
+.next h3{font-size:19px;margin:8px 0 4px;line-height:1.35}
+.next .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+
+.near{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.near a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:64px;border-radius:14px;background:var(--sunk);text-decoration:none;font-size:12.5px;font-weight:700;text-align:center;padding:6px}
+.near a span{font-size:20px;line-height:1.2}
+
+.climate{display:flex;flex-direction:column;gap:9px}
+.cl{display:grid;grid-template-columns:70px minmax(0,1fr) 72px;align-items:center;gap:10px;font-size:13px}
+.cl.today{font-weight:800}
+.cl .track{position:relative;height:8px;border-radius:8px;background:var(--sunk)}
+.cl .track b{position:absolute;top:0;bottom:0;border-radius:8px;background:linear-gradient(90deg,var(--l-fuji),var(--sakura))}
+.cl .track .zero{position:absolute;top:-3px;bottom:-3px;width:1.5px;background:var(--ink2);opacity:.45}
+.cl .t{text-align:right;font-family:var(--font-jp);font-variant-numeric:tabular-nums}
+.scale{display:grid;grid-template-columns:70px minmax(0,1fr) 72px;gap:10px;font-size:10.5px;color:var(--ink2)}
+.scale div{display:flex;justify-content:space-between}
+
+.todo li{display:flex;gap:8px;align-items:flex-start;font-size:14px;padding:5px 0}
+.todo ul{list-style:none;margin:0;padding:0}
+.todo li::before{content:"";flex:0 0 8px;height:8px;margin-top:7px;border-radius:50%;border:2px solid var(--yuzu)}
+
+/* Plan */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:14px;background:var(--sunk);border:1px solid var(--line)}
+.seg button,.seg label{border:0;background:none;border-radius:10px;padding:9px 6px;font-weight:700;font-size:13.5px;color:var(--ink2);text-align:center;cursor:pointer}
+.seg button.on,.seg input:checked+span{background:var(--card);color:var(--ink);box-shadow:0 1px 4px color-mix(in srgb,var(--ink) 12%,transparent)}
+.seg label{padding:0;display:block}
+.seg label span{display:block;border-radius:10px;padding:9px 6px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+
+.strip{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding:2px 16px 4px;scroll-padding-inline:16px}
+.strip::-webkit-scrollbar{display:none}
+.pill{position:relative;flex:0 0 58px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:8px 2px 7px;text-align:center}
+.pill .d{display:block;font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.06em}
+.pill .dt{display:block;font-family:var(--font-jp);font-weight:700;font-size:13px}
+.pill .e{display:block;font-size:18px;line-height:1.3}
+.pill.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.pill.on .d{color:inherit;opacity:.7}
+.pill.today::after{content:"今天";position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:var(--sakura);color:var(--on-accent);font-size:9.5px;font-weight:800;border-radius:6px;padding:0 5px;line-height:15px}
+.pill .seal{position:absolute;right:3px;top:3px;width:9px;height:9px;border-radius:50%;background:var(--shu)}
+
+.sign{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;text-align:center}
+.sign .meta{display:flex;justify-content:space-between;padding:11px 14px 0;font-size:12px;color:var(--ink2);font-weight:600}
+.sign .kana{font-family:var(--font-jp);font-size:13px;letter-spacing:.32em;color:var(--ink2);margin-top:6px;padding-left:.32em}
+.sign .kanji{font-family:var(--font-jp);font-weight:900;font-size:46px;line-height:1.12;letter-spacing:.14em;padding-left:.14em}
+.sign .ro{font-size:13px;letter-spacing:.1em;color:var(--ink2);font-weight:600}
+.sign .bar{position:relative;height:10px;background:var(--lc);margin-top:14px}
+.sign .bar::after{content:"";position:absolute;left:50%;top:-7px;width:24px;height:24px;transform:translateX(-50%);background:var(--card);border:4px solid var(--lc);border-radius:7px}
+.sign .nbrs{display:flex;justify-content:space-between;gap:8px;padding:6px 4px 8px}
+.sign .nbrs button{background:none;border:0;font-size:13px;font-weight:700;padding:8px 10px;min-height:40px;color:var(--ink)}
+.sign .nbrs button:disabled{visibility:hidden}
+.stamp{position:absolute;right:14px;top:34px;width:62px;height:62px;border:2.5px solid var(--shu);color:var(--shu);border-radius:50%;display:grid;place-items:center;font-family:var(--font-jp);font-weight:900;font-size:13px;line-height:1.15;transform:rotate(-14deg);opacity:.9;box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4.5px var(--shu)}
+.stamp b{font-size:22px;display:block}
+.daytitle h2{margin:0;font-size:20px;line-height:1.35;text-wrap:balance}
+.daytitle p{margin:4px 0 0;font-size:13px;color:var(--ink2)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--sunk);border:1px solid var(--line);padding:5px 10px;font-size:12.5px;font-weight:600;text-decoration:none}
+
+.tl{display:flex;flex-direction:column;gap:10px}
+.ev{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px}
+.ev .tm{font-family:var(--font-jp);font-weight:700;font-variant-numeric:tabular-nums;font-size:14px;padding-top:13px;color:var(--ai)}
+.ev .bd{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.ev.now .bd{border-color:var(--sakura);box-shadow:0 0 0 2px var(--sakura-soft)}
+.ev .hd{display:flex;gap:10px;align-items:flex-start}
+.ev .hd>div{flex:1;min-width:0}
+.ev h3{margin:3px 0 2px;font-size:15.5px;line-height:1.4}
+.ev .note{font-size:13px;color:var(--ink2);line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.ev.done .bd{background:var(--sunk)}
+.ev.done h3{text-decoration:line-through;color:var(--ink2)}
+.tick{flex:0 0 30px;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:var(--card);display:grid;place-items:center;color:transparent;font-weight:900;font-size:14px;padding:0}
+.ev.done .tick{background:var(--shu);border-color:var(--shu);color:var(--on-accent)}
+.cat{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:1px 7px;color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,transparent)}
+.acts4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:10px}
+.acts4 .btn{min-height:36px;padding:6px 2px;font-size:12.5px;border-radius:10px}
+
+/* Money */
+.tot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.tot .big{font-family:var(--font-jp);font-weight:900;font-size:36px;line-height:1.05;font-variant-numeric:tabular-nums}
+.tot .conv{font-size:13px;color:var(--ink2)}
+.meter{height:10px;border-radius:10px;background:var(--sunk);overflow:hidden;margin:12px 0 6px;display:flex}
+.meter b{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--ink2);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:3px}
+.settle{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--sakura-soft);color:var(--ink);font-size:13.5px;font-weight:600}
+.amt{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:14px;padding:6px 12px;background:var(--sunk)}
+.amt b{font-family:var(--font-jp);font-size:24px;color:var(--ink2)}
+.amt input{flex:1;min-width:0;border:0;background:none;font-family:var(--font-jp);font-weight:900;font-size:30px;padding:4px 0;outline:none;font-variant-numeric:tabular-nums}
+.amt small{font-size:12px;color:var(--ink2);white-space:nowrap}
+.catpick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
+.catpick label{position:relative}
+.catpick input{position:absolute;opacity:0;pointer-events:none}
+.catpick span{display:flex;align-items:center;justify-content:center;gap:4px;min-height:40px;border-radius:11px;border:1px solid var(--line);font-size:13px;font-weight:700;background:var(--card)}
+.catpick input:checked+span{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.catpick input:focus-visible+span{outline:3px solid color-mix(in srgb,var(--ai) 55%,transparent)}
+.frow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:10px}
+.field{display:block;font-size:12px;font-weight:700;color:var(--ink2)}
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:5px;border:1px solid var(--line);background:var(--card);border-radius:11px;padding:10px 11px;font-size:16px;font-weight:500;color:var(--ink)}
+.field textarea{min-height:84px;resize:vertical}
+.check{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-top:10px}
+.check input{width:20px;height:20px;accent-color:var(--sakura)}
+.xgroup h3{font-size:13px;color:var(--ink2);margin:4px 0 6px;font-weight:700;display:flex;justify-content:space-between}
+.xrow{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.xrow:first-of-type{border-top:0}
+.xrow .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;background:color-mix(in srgb,var(--cc) 16%,transparent)}
+.xrow .tx{min-width:0}
+.xrow .tx b{display:block;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xrow .tx small{font-size:12px;color:var(--ink2)}
+.xrow .rt{text-align:right}
+.xrow .rt b{display:block;font-family:var(--font-jp);font-variant-numeric:tabular-nums;font-size:15px}
+.xrow .rt button{border:0;background:none;color:var(--ink2);font-size:11.5px;padding:2px 0;font-weight:600}
+.xrow .rt button.armed{color:var(--shu)}
+.brow{display:grid;grid-template-columns:76px minmax(0,1fr) 92px;gap:10px;align-items:center;padding:7px 0;font-size:13px}
+.brow .bt{height:8px;border-radius:8px;background:var(--sunk);overflow:hidden}
+.brow .bt b{display:block;height:100%;background:var(--matcha);border-radius:8px}
+.brow .bt b.over{background:var(--shu)}
+.brow input{width:100%;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 8px;font-size:15px;text-align:right;font-family:var(--font-jp);font-variant-numeric:tabular-nums}
+.brow .sp{font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.empty{text-align:center;padding:18px 8px;color:var(--ink2);font-size:13.5px}
+.empty b{display:block;font-size:28px;margin-bottom:4px}
+
+/* Checklist */
+.cg h3{font-size:13px;color:var(--ink2);margin:0 0 4px;font-weight:700;letter-spacing:.04em}
+.ci{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.cg .ci:first-of-type{border-top:0}
+.ci input{width:22px;height:22px;flex:0 0 22px;accent-color:var(--shu)}
+.ci label{flex:1;min-width:0;font-size:14.5px}
+.ci.done label{color:var(--ink2);text-decoration:line-through}
+.ci button{border:0;background:none;color:var(--ink2);font-size:12px;padding:6px 4px;font-weight:600}
+.ci button.armed{color:var(--shu)}
+.stamps{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.stamps span{width:30px;height:30px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;font-family:var(--font-jp);font-weight:900;font-size:12px;color:var(--ink2)}
+.stamps span.on{border:2px solid var(--shu);color:var(--shu);transform:rotate(-10deg)}
+.addrow{display:grid;grid-template-columns:minmax(0,1fr) 92px auto;gap:6px;margin-top:12px}
+.addrow input,.addrow select{border:1px solid var(--line);background:var(--card);border-radius:11px;padding:9px 10px;font-size:16px;min-width:0}
+
+/* Tools */
+.conv-box{display:flex;flex-direction:column;gap:8px}
+.conv-box .amt input{font-size:26px}
+.swapnote{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink2)}
+.qa{display:flex;gap:6px;flex-wrap:wrap}
+.qa button{border:1px solid var(--line);background:var(--sunk);border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:700;font-family:var(--font-jp)}
+.phg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 10px;padding:0 16px}
+.phg::-webkit-scrollbar{display:none}
+.phg button{flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
+.phg button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ph{display:flex;flex-direction:column}
+.ph button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:11px 0}
+.ph button:first-child{border-top:0}
+.ph .ja{font-family:var(--font-jp);font-weight:700;font-size:17px;line-height:1.35}
+.ph .zh{font-size:13px;color:var(--ink2);grid-column:1}
+.ph .go{grid-row:1/3;grid-column:2;align-self:center;font-size:12px;color:var(--sakura);font-weight:700}
+.sos{display:flex;flex-direction:column}
+.sos div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+.sos div:first-child{border-top:0}
+.sos b{font-family:var(--font-jp);font-size:20px;font-variant-numeric:tabular-nums;user-select:all}
+.sos small{font-size:12.5px;color:var(--ink2);grid-column:1}
+.sos .act{grid-row:1/3;grid-column:2;display:flex;gap:6px}
+.tips{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.tips li{font-size:13.5px;line-height:1.6;padding-left:14px;position:relative}
+.tips li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:2px;background:var(--sakura);transform:rotate(45deg)}
+.tips b{font-weight:800}
+
+/* Dock */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+.dock .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.dock button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-radius:12px;font-size:11px;font-weight:700;color:var(--ink2);min-height:52px}
+.dock svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dock button.on{color:var(--sakura)}
+.dock button.on svg{stroke-width:2.3}
+
+/* Sheets */
+.scrim{position:fixed;inset:0;z-index:40;background:color-mix(in srgb,#120f1c 55%,transparent);display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:560px;background:var(--card);border-radius:22px 22px 0 0;padding:10px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:90%;overflow:auto}
+.sheet .grab{width:40px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 10px}
+.sheet h2{font-size:18px;margin:0 0 6px}
+.sheet .field{margin-top:10px}
+.sheet .acts{display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:16px}
+.big-phrase{text-align:center;padding:14px 4px 6px}
+.big-phrase .ja{font-family:var(--font-jp);font-weight:900;font-size:clamp(30px,9vw,46px);line-height:1.3;text-wrap:balance}
+.big-phrase .ro{font-size:14px;color:var(--ink2);margin-top:10px;letter-spacing:.02em}
+.big-phrase .zh{font-size:15px;margin-top:4px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:12px;font-size:13.5px;font-weight:600;max-width:calc(100% - 32px);text-align:center}
+body.ro .rw{display:none!important}
+@media (prefers-reduced-motion:no-preference){.view{animation:fade .22s ease-out}@keyframes fade{from{transform:translateY(4px)}to{transform:none}}}
+@media (max-width:360px){.pass .big{font-size:54px}.sign .kanji{font-size:38px}.acts4{grid-template-columns:1fr 1fr}.near{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="eyebrow">OUR JAPAN WINTER · 2026</div>
+      <div class="brand">我们的日本小旅行</div>
+    </div>
+    <button class="sync" id="sync" type="button" onclick="explainSync()"><i></i><span id="syncText">同步</span></button>
+  </header>
+
+  <main>
+    <!-- 今天 -->
+    <section class="view" id="v-home">
+      <div id="homePass"></div>
+      <div id="homeNext"></div>
+      <div class="card">
+        <div class="h"><h2>就在附近</h2><span class="fine">打开地图 App，按你现在的位置搜</span></div>
+        <div class="near" id="near"></div>
+      </div>
+      <div id="homeTodo"></div>
+      <div class="card">
+        <div class="h"><h2>12 月会多冷</h2><span class="fine">历年 12 月平均最低～最高 °C</span></div>
+        <div class="climate" id="climate"></div>
+      </div>
+      <div id="homeMoney"></div>
+    </section>
+
+    <!-- 行程 -->
+    <section class="view" id="v-plan" hidden>
+      <div class="seg" id="planSeg">
+        <button type="button" data-plan="A" onclick="setPlan('A')">方案 A · 不去东京</button>
+        <button type="button" data-plan="B" onclick="setPlan('B')">方案 B · 含东京</button>
+      </div>
+      <nav class="strip" id="strip" aria-label="选择日期"></nav>
+      <div id="sign"></div>
+      <div id="dayTitle" class="daytitle"></div>
+      <div class="tl" id="tl"></div>
+      <button class="btn soft wide rw" type="button" onclick="openEdit(-1)">＋ 给这天加一项</button>
+      <div id="resetDay"></div>
+      <p class="fine">时间都是建议值，不是已订车次。新干线、巴士、酒店和圣诞活动请以临行前官方信息为准。</p>
+    </section>
+
+    <!-- 记账 -->
+    <section class="view" id="v-money" hidden>
+      <div id="moneySum"></div>
+      <form class="card rw" id="expForm" autocomplete="off">
+        <div class="h"><h2>记一笔</h2><span class="fine" id="expConvHint"></span></div>
+        <label class="amt" for="expAmt"><b>¥</b><input id="expAmt" inputmode="numeric" placeholder="0" aria-label="金额（日元）"><small id="expConv"></small></label>
+        <div class="catpick" id="catPick"></div>
+        <div class="frow">
+          <label class="field">谁付的
+            <select id="expPayer"><option value="0">熊熊</option><option value="1">兔兔</option></select>
+          </label>
+          <label class="field">哪一天
+            <select id="expDay"></select>
+          </label>
+        </div>
+        <label class="field" style="margin-top:10px">备注
+          <input id="expNote" maxlength="60" placeholder="例如：道顿堀章鱼烧">
+        </label>
+        <label class="check"><input type="checkbox" id="expSplit" checked> 两人平摊（不勾＝付款人自己的）</label>
+        <button class="btn pri wide" style="margin-top:12px" type="submit">记下来</button>
+      </form>
+      <div id="expList"></div>
+      <div id="budgetCard"></div>
+    </section>
+
+    <!-- 清单 -->
+    <section class="view" id="v-list" hidden>
+      <div id="listHead"></div>
+      <div id="listBody"></div>
+      <form class="card rw" id="checkAdd" autocomplete="off">
+        <div class="h"><h2>加一条</h2></div>
+        <div class="addrow">
+          <input id="ckText" maxlength="60" placeholder="例如：买暖宝宝" aria-label="清单内容">
+          <select id="ckGroup" aria-label="分组"><option>预订</option><option>证件</option><option>行李</option></select>
+          <button class="btn pri" type="submit">添加</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 工具 -->
+    <section class="view" id="v-tools" hidden>
+      <div class="card" id="syncCard">
+        <div class="h"><h2>和另一半同步</h2><span class="fine">不用联网账号，微信发一段字就行</span></div>
+        <p class="fine" style="font-size:13px">数据存在你自己的手机里。想让两边一样时：一个人点「生成同步码」发到微信，另一个人复制整段，粘贴到下面点「合并」。行程和设置以较新的修改为准，记账两边会合在一起，不会重复。</p>
+        <button class="btn pri wide" type="button" style="margin-top:12px" onclick="shareCode()">生成同步码，发给对方</button>
+        <div id="syncOutWrap" hidden style="margin-top:10px">
+          <label class="field">同步码（已复制，也可以长按全选）<textarea id="syncOut" readonly style="min-height:70px;font-size:12px"></textarea></label>
+        </div>
+        <label class="field" style="margin-top:14px">粘贴对方发来的同步码
+          <textarea id="syncIn" placeholder="JPTRIP1:…" style="min-height:70px;font-size:12px"></textarea>
+        </label>
+        <button class="btn soft wide" type="button" style="margin-top:8px" onclick="importCode()">合并到我的手机</button>
+        <p class="fine" style="margin-top:8px">同步码也是备份：换手机或清理浏览器前，先生成一份存在微信「文件传输助手」里。</p>
+      </div>
+      <div class="card">
+        <div class="h"><h2>汇率换算</h2><span class="fine" id="rateNote"></span></div>
+        <div class="conv-box">
+          <label class="amt" for="cvJpy"><b>¥</b><input id="cvJpy" inputmode="decimal" value="1000" aria-label="日元"><small>日元</small></label>
+          <label class="amt" for="cvHome"><b id="cvSym">≈</b><input id="cvHome" inputmode="decimal" aria-label="换算后"><small id="cvUnit">元</small></label>
+          <div class="qa" id="cvQuick"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="h"><h2>日语救急</h2><span class="fine">点一句，放大给店员看</span></div>
+        <div class="phg" id="phGroups"></div>
+        <div class="ph" id="phList"></div>
+      </div>
+
+      <div class="card">
+        <div class="h"><h2>紧急电话</h2><span class="fine">号码可长按复制</span></div>
+        <div class="sos" id="sos"></div>
+      </div>
+
+      <div class="card">
+        <div class="h"><h2>这趟旅行的小贴士</h2></div>
+        <ul class="tips">
+          <li><b>交通卡：</b>ICOCA 和 Suica 在大阪、京都、奈良、东京都能刷，iPhone 可以直接加到钱包里，坐车、便利店都方便。</li>
+          <li><b>去三岛换车：</b>新干线 Nozomi 不停三岛，要坐 Hikari（部分班次）或 Kodama，订票时看清停靠站。</li>
+          <li><b>河口湖很冷：</b>12 月早晚常在零度以下，羽绒服、帽子、手套都带上；清晨通常最容易看清富士山。</li>
+          <li><b>退税：</b>日本免税制度在 2026 年 11 月起改为先付税、离境时退税，购物时出示护照并保留收据，出发前查一下最新办理方式。</li>
+          <li><b>取现：</b>7-Eleven 的 ATM 支持多数境外银行卡，24 小时可用。</li>
+          <li><b>平安夜：</b>12/24 的餐厅和灯饰附近人很多，晚餐一定提前订位。</li>
+          <li><b>垃圾：</b>街上垃圾桶很少，随身带个小袋子。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="h"><h2>我们的设置</h2><span class="fine">同步后两人一致</span></div>
+        <div class="frow" style="margin-top:0">
+          <label class="field">旅伴 1 的名字<input id="nm0" maxlength="8"></label>
+          <label class="field">旅伴 2 的名字<input id="nm1" maxlength="8"></label>
+        </div>
+        <div class="field" style="margin-top:12px">换算成哪种钱</div>
+        <div class="seg" style="margin-top:5px" id="curSeg">
+          <label><input type="radio" name="cur" id="curCNY" value="CNY"><span>人民币 元</span></label>
+          <label><input type="radio" name="cur" id="curHKD" value="HKD"><span>港币 HK$</span></label>
+        </div>
+        <label class="field" style="margin-top:12px"><span id="rateLabel">1 日元 = ? 元</span>
+          <input id="rateIn" inputmode="decimal">
+        </label>
+        <p class="fine" style="margin-top:8px">汇率是参考值，不会自动更新。<a id="rateLink" href="https://www.google.com/search?q=JPY+CNY" target="_blank" rel="noopener">查一下今天的汇率</a>，再改成实时数字。</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="dock" aria-label="主菜单">
+  <div class="in">
+    <button type="button" data-tab="home" onclick="showTab('home')"><svg viewBox="0 0 24 24"><path d="M2.5 5.5c6.3 1.6 12.7 1.6 19 0"/><path d="M4.5 9.5h15"/><path d="M7 7v14M17 7v14"/><path d="M12 7v2.5"/></svg>今天</button>
+    <button type="button" data-tab="plan" onclick="showTab('plan')"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3M8 17h6"/></svg>行程</button>
+    <button type="button" data-tab="money" onclick="showTab('money')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 7l3.5 4.5L15.5 7M12 11.5V18M9 12.5h6M9 15.5h6"/></svg>记账</button>
+    <button type="button" data-tab="list" onclick="showTab('list')"><svg viewBox="0 0 24 24"><path d="M4 6.5l2 2 3.5-3.5M4 14l2 2 3.5-3.5M13 7h7M13 14.5h7M4 20.5h16"/></svg>清单</button>
+    <button type="button" data-tab="tools" onclick="showTab('tools')"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v10.5H11l-4.5 4v-4H4z"/><path d="M9 9h6M9 12h4"/></svg>工具</button>
+  </div>
+</nav>
+
+<div class="scrim" id="editScrim" hidden onclick="if(event.target===this)closeSheets()">
+  <form class="sheet" id="editForm" autocomplete="off">
+    <div class="grab"></div>
+    <h2 id="editTitle">编辑这一项</h2>
+    <div class="frow">
+      <label class="field">时间<input id="fTime" type="time" required></label>
+      <label class="field">类型<select id="fCat"></select></label>
+    </div>
+    <label class="field">做什么<input id="fTitle" maxlength="60" placeholder="例如：清水寺"></label>
+    <label class="field">地图搜索关键词<input id="fPlace" maxlength="80" placeholder="例如：清水寺 京都"></label>
+    <label class="field">备注、路线提示<textarea id="fNote" maxlength="400" placeholder="交通、费用、注意事项…"></textarea></label>
+    <div class="acts">
+      <button class="btn" type="button" onclick="closeSheets()">取消</button>
+      <button class="btn pri" type="submit">保存</button>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="phraseScrim" hidden onclick="if(event.target===this)closeSheets()">
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="big-phrase">
+      <div class="ja" id="bpJa"></div>
+      <div class="ro" id="bpRo"></div>
+      <div class="zh" id="bpZh"></div>
+    </div>
+    <div class="acts">
+      <button class="btn" type="button" onclick="closeSheets()">关闭</button>
+      <button class="btn pri" type="button" id="bpSpeak" onclick="speakCurrent()">用日语读出来</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+const PLANS = {"A":[{"date":"12/17","week":"周四","city":"大阪","title":"抵达日本 · 道顿堀夜游","emoji":"🌃","area":"难波 / 道顿堀","ev":[["17:10","抵达关西国际机场 T2","入境、提取行李；预留约80–110分钟","交通","关西国际机场第二航站楼"],["18:50","机场 → 难波","T2接驳巴士到Aeroplaza；南海电铁到难波约45–55分钟","交通","南海难波站"],["20:15","酒店办理入住","建议难波南海电铁站步行范围","住宿","南海难波站"],["20:45","道顿堀晚餐＋拍照","章鱼烧、大阪烧、固力果广告牌、法善寺横丁","美食","道顿堀"]]},{"date":"12/18","week":"周五","city":"大阪","title":"大阪城 · 梅田 · 冬季灯饰","emoji":"🏯","area":"大阪城 / 梅田 / 中之岛","ev":[["09:30","早餐出发","地铁前往大阪城区域","交通","大阪城公园"],["10:15","大阪城公园＋天守阁","城堡、公园慢慢散步","景点","大阪城天守阁"],["12:30","午餐","附近大阪烧或日式定食","美食","大阪城公园 附近 餐厅"],["14:00","梅田购物","LUCUA、Grand Front Osaka","购物","Grand Front Osaka"],["18:00","中之岛灯饰约会","以当年官方实际灯光活动和开放时间为准","约会","中之岛公园"],["19:30","梅田晚餐","可以选居酒屋或烧肉","美食","梅田 烧肉"]]},{"date":"12/19","week":"周六","city":"京都","title":"清水寺 · 二三年坂 · 祇园","emoji":"⛩️","area":"清水寺 / 祇园","ev":[["08:30","大阪出发去京都","难波→淀屋桥→京阪电铁至清水五条；加步行约75–100分钟","交通","清水五条站"],["10:15","清水寺","寺庙景色和拍照","景点","清水寺 京都"],["11:45","二年坂与三年坂","八坂塔周边日式街道","景点","二年坂 京都"],["13:00","京都午餐","汤豆腐、乌冬或荞麦面","美食","清水寺 京都 午餐"],["14:30","八坂神社","寺社参拜与散步","景点","八坂神社 京都"],["15:30","祇园与花见小路","漫步到祇园白川；尊重当地拍摄限制","景点","祇园白川"],["18:00","京都晚餐，回大阪","京阪电铁往返，预计20:00前后到酒店","交通","祇园四条站"]]},{"date":"12/20","week":"周日","city":"奈良","title":"奈良小鹿 · 东大寺","emoji":"🦌","area":"奈良公园 / 奈良町","ev":[["09:00","近铁大阪难波 → 奈良","近铁约40–50分钟","交通","近铁奈良站"],["10:00","奈良公园喂小鹿","请只喂专用鹿仙贝；注意野生鹿行为","景点","奈良公园"],["12:00","釜饭或荞麦面午餐","周末热门餐厅可能排队","美食","奈良公园 釜饭"],["13:30","东大寺大佛殿","经典寺院参观","景点","东大寺 奈良"],["15:00","奈良町咖啡与伴手礼","散步休息","购物","奈良町"],["17:00","乘近铁返回大阪","晚餐可在难波解决","交通","近铁奈良站"]]},{"date":"12/21","week":"周一","city":"京都","title":"岚山竹林 · 渡月桥","emoji":"🎋","area":"京都岚山","ev":[["09:00","大阪出发前往岚山","难波→梅田→阪急京都线至桂→岚山；约80–100分钟","交通","阪急岚山站"],["10:45","岚山竹林小径","早点去更适合拍照","景点","嵯峨野竹林小径"],["12:00","天龙寺庭园","庭园与山景","景点","天龙寺 京都"],["13:00","岚山午餐","荞麦面、汤豆腐","美食","岚山 午餐"],["14:30","渡月桥散步","桂川、山景、情侣合照","景点","渡月桥"],["15:30","抹茶甜点与咖啡","轻松下午茶","美食","岚山 抹茶 咖啡"],["17:00","返回大阪＋整理行李","明早长途出发；若寄送行李提前询问酒店","交通","阪急岚山站"]]},{"date":"12/22","week":"周二","city":"河口湖","title":"大阪 → 富士山 · 湖畔温泉","emoji":"🗻","area":"三岛 / 河口湖","ev":[["07:00","大阪退房去新大阪站","从难波搭地铁；建议预留足够进站时间","交通","新大阪站"],["07:30","新干线往三岛","乘可在三岛停车的Hikari或Kodama，列车班次待核对","交通","三岛站"],["10:30","三岛换富士急高速巴士","预约三岛→河口湖班次；站内留足换乘时间","交通","三岛站南口"],["13:00","河口湖午餐、放行李","车站附近或酒店接驳","美食","河口湖站"],["14:30","河口湖畔＋大石公园","晴天可拍富士山；天气不好可以调整","景点","大石公园 河口湖"],["16:30","温泉旅馆入住","尽量选含晚餐的酒店、提前确认接驳","住宿","河口湖 温泉酒店"],["18:00","日式晚餐与温泉","情侣同泡请预约私人汤屋","约会","河口湖 温泉"]]},{"date":"12/23","week":"周三","city":"河口湖","title":"忠灵塔 · 河口湖慢旅行","emoji":"📸","area":"新仓山 / 河口湖","ev":[["07:30","早餐＋看山天气","清晨能见度常值得关注","休息","河口湖"],["08:30","河口湖站 → 下吉田","富士急行线约15分钟，步行上坡至新仓山公园","交通","下吉田站"],["09:15","新仓山浅间公园忠灵塔","阶梯较多，慢慢走","景点","新仓山浅间公园"],["11:30","返回河口湖吃午餐","预留公交/火车换乘","美食","河口湖站 午餐"],["13:00","大石公园＋湖边咖啡","若前一天拍够可换忍野八海，勿塞满两地","景点","大石公园 河口湖"],["16:30","回旅馆泡温泉","第二晚放松","住宿","河口湖 温泉酒店"],["18:30","日式晚餐","如未含餐，可去湖边餐厅","美食","河口湖 晚餐"]]},{"date":"12/24","week":"周四","city":"大阪","title":"回大阪 · 圣诞平安夜","emoji":"🎄","area":"河口湖 / 大阪梅田","ev":[["08:00","温泉旅馆早餐与退房","最后拍富士山","住宿","河口湖"],["10:00","河口湖 → 三岛","预约高速巴士，车程约1.5–2小时","交通","三岛站"],["12:30","三岛午餐、换乘","再搭可停三岛的新干线前往新大阪","交通","三岛站"],["15:30","抵达大阪、入住酒店","视实际列车而定；建议难波或梅田","住宿","难波站"],["17:30","梅田 / 御堂筋圣诞灯饰","请核对当年活动安排","约会","御堂筋 大阪"],["19:00","圣诞特别晚餐","推荐事先预约双人套餐","美食","梅田 景观餐厅"]]},{"date":"12/25","week":"周五","city":"临空城","title":"最后购物 · 搬到机场旁","emoji":"🛍️","area":"难波 / 临空城","ev":[["09:30","难波早餐与退房","整理大件行李","住宿","难波站"],["10:30","南海电铁去临空城","约40–50分钟；到奥特莱斯前先确认寄存","交通","临空城站"],["12:00","临空城午餐","奥特莱斯附近餐厅","美食","Rinku Premium Outlets Restaurants"],["13:00","Rinku Premium Outlets购物","运动品牌、礼品","购物","Rinku Premium Outlets"],["16:00","临空海滨散步","天气允许拍日落","景点","Rinku Marble Beach"],["17:30","机场酒店入住","务必确认凌晨到T2方式","住宿","Hotel Nikko Kansai Airport"],["20:00","收拾行李早睡","检查护照、登机、行李限额","休息","关西国际机场"]]},{"date":"12/26","week":"周六","city":"返程","title":"关西机场 → 香港","emoji":"✈️","area":"关西国际机场 T2","ev":[["05:00","起床、退房","以航司实际值机要求调整","住宿","关西国际机场"],["05:30","抵达关西机场 T2","从Aeroplaza搭机场免费接驳巴士到T2","交通","关西机场第二航站楼"],["08:00","飞机起飞","Peach：大阪 KIX → 香港 HKG","交通","关西国际机场"],["11:45","抵达香港","旅途结束 ❤️","休息","香港国际机场"]]}],"B":[{"date":"12/17","week":"周四","city":"大阪","title":"抵达日本 · 道顿堀夜游","emoji":"🌃","area":"难波 / 道顿堀","ev":[["17:10","抵达关西国际机场 T2","入境、提取行李；预留约80–110分钟","交通","关西国际机场第二航站楼"],["18:50","机场 → 难波","T2接驳巴士到Aeroplaza；南海电铁到难波约45–55分钟","交通","南海难波站"],["20:15","酒店办理入住","建议难波南海电铁站步行范围","住宿","南海难波站"],["20:45","道顿堀晚餐＋拍照","章鱼烧、大阪烧、固力果广告牌、法善寺横丁","美食","道顿堀"]]},{"date":"12/18","week":"周五","city":"大阪","title":"大阪城 · 梅田 · 冬季灯饰","emoji":"🏯","area":"大阪城 / 梅田 / 中之岛","ev":[["09:30","早餐出发","地铁前往大阪城区域","交通","大阪城公园"],["10:15","大阪城公园＋天守阁","城堡、公园慢慢散步","景点","大阪城天守阁"],["12:30","午餐","附近大阪烧或日式定食","美食","大阪城公园 附近 餐厅"],["14:00","梅田购物","LUCUA、Grand Front Osaka","购物","Grand Front Osaka"],["18:00","中之岛灯饰约会","以当年官方实际灯光活动和开放时间为准","约会","中之岛公园"],["19:30","梅田晚餐","可以选居酒屋或烧肉","美食","梅田 烧肉"]]},{"date":"12/19","week":"周六","city":"京都","title":"清水寺 · 二三年坂 · 祇园","emoji":"⛩️","area":"清水寺 / 祇园","ev":[["08:30","大阪出发去京都","难波→淀屋桥→京阪电铁至清水五条；加步行约75–100分钟","交通","清水五条站"],["10:15","清水寺","寺庙景色和拍照","景点","清水寺 京都"],["11:45","二年坂与三年坂","八坂塔周边日式街道","景点","二年坂 京都"],["13:00","京都午餐","汤豆腐、乌冬或荞麦面","美食","清水寺 京都 午餐"],["14:30","八坂神社","寺社参拜与散步","景点","八坂神社 京都"],["15:30","祇园与花见小路","漫步到祇园白川；尊重当地拍摄限制","景点","祇园白川"],["18:00","京都晚餐，回大阪","京阪电铁往返，预计20:00前后到酒店","交通","祇园四条站"]]},{"date":"12/20","week":"周日","city":"奈良","title":"奈良小鹿 · 东大寺","emoji":"🦌","area":"奈良公园 / 奈良町","ev":[["09:00","近铁大阪难波 → 奈良","近铁约40–50分钟","交通","近铁奈良站"],["10:00","奈良公园喂小鹿","请只喂专用鹿仙贝；注意野生鹿行为","景点","奈良公园"],["12:00","釜饭或荞麦面午餐","周末热门餐厅可能排队","美食","奈良公园 釜饭"],["13:30","东大寺大佛殿","经典寺院参观","景点","东大寺 奈良"],["15:00","奈良町咖啡与伴手礼","散步休息","购物","奈良町"],["17:00","乘近铁返回大阪","晚餐可在难波解决","交通","近铁奈良站"]]},{"date":"12/21","week":"周一","city":"京都","title":"岚山竹林 · 渡月桥","emoji":"🎋","area":"京都岚山","ev":[["09:00","大阪出发前往岚山","难波→梅田→阪急京都线至桂→岚山；约80–100分钟","交通","阪急岚山站"],["10:45","岚山竹林小径","早点去更适合拍照","景点","嵯峨野竹林小径"],["12:00","天龙寺庭园","庭园与山景","景点","天龙寺 京都"],["13:00","岚山午餐","荞麦面、汤豆腐","美食","岚山 午餐"],["14:30","渡月桥散步","桂川、山景、情侣合照","景点","渡月桥"],["15:30","抹茶甜点与咖啡","轻松下午茶","美食","岚山 抹茶 咖啡"],["17:00","返回大阪＋整理行李","明早长途出发；若寄送行李提前询问酒店","交通","阪急岚山站"]]},{"date":"12/22","week":"周二","city":"河口湖","title":"大阪 → 富士山 · 湖畔温泉","emoji":"🗻","area":"三岛 / 河口湖","ev":[["07:00","大阪退房去新大阪站","从难波搭地铁；建议预留足够进站时间","交通","新大阪站"],["07:30","新干线往三岛","乘可在三岛停车的Hikari或Kodama，列车班次待核对","交通","三岛站"],["10:30","三岛换富士急高速巴士","预约三岛→河口湖班次；站内留足换乘时间","交通","三岛站南口"],["13:00","河口湖午餐、放行李","车站附近或酒店接驳","美食","河口湖站"],["14:30","河口湖畔＋大石公园","晴天可拍富士山；天气不好可以调整","景点","大石公园 河口湖"],["16:30","温泉旅馆入住","尽量选含晚餐的酒店、提前确认接驳","住宿","河口湖 温泉酒店"],["18:00","日式晚餐与温泉","河口湖只住这一晚，建议提前确认含餐和接驳","约会","河口湖 温泉"]]},{"date":"12/23","week":"周三","city":"东京","title":"富士山早晨 → 东京新宿","emoji":"🗼","area":"忠灵塔 / 新宿","ev":[["07:15","退房＋早餐","只住河口湖一晚，取好行李","住宿","河口湖"],["08:00","前往新仓山浅间公园","火车到下吉田；注意台阶及时间","交通","下吉田站"],["09:00","忠灵塔拍富士山","晴天观景，云多则放宽计划","景点","新仓山浅间公园"],["11:30","午餐、取行李","回河口湖车站周边","美食","河口湖站 午餐"],["13:00","河口湖 → 新宿","高速巴士约2–2.5小时，务必提前预约","交通","Busta新宿"],["16:00","东京酒店入住","建议新宿站附近","住宿","新宿站"],["18:00","新宿夜景与美食","都厅附近、新宿居酒屋或烧肉","美食","新宿 烧肉"]]},{"date":"12/24","week":"周四","city":"东京","title":"东京经典＋平安夜约会","emoji":"🎄","area":"浅草 / 涩谷 / 六本木","ev":[["09:00","新宿 → 浅草","地铁约35–45分钟","交通","浅草站"],["09:45","浅草寺与雷门","拍照、仲见世商店街","景点","浅草寺"],["12:00","浅草天妇罗午餐","当地餐厅，留意排队","美食","浅草 天妇罗"],["13:15","前往涩谷购物","地铁约35–45分钟","交通","涩谷站"],["14:00","涩谷十字路口、PARCO","逛店和拍照","购物","SHIBUYA PARCO"],["16:00","SHIBUYA SKY 日落时段","若订不到门票改逛表参道","景点","SHIBUYA SKY"],["18:00","六本木夜景与圣诞灯饰","实际2026活动以官方公告为准","约会","六本木榉坂"],["19:30","圣诞情侣晚餐","需预订，可选六本木/表参道","美食","六本木 情侣晚餐"]]},{"date":"12/25","week":"周五","city":"东京→关西机场","title":"东京半日 → 新干线返大阪","emoji":"🚄","area":"东京站 / 关西机场","ev":[["08:30","新宿早餐、退房","前往东京站，带好行李","住宿","新宿站"],["09:45","东京站丸之内散步","最后伴手礼、拍照","购物","东京站丸之内"],["11:15","东京站午餐","便当或拉面街","美食","东京站 拉面街"],["12:30","进站准备乘新干线","提前订Nozomi指定席","交通","东京站"],["13:00","东京 → 新大阪","Nozomi车程约2小时30–40分钟；非确认班次","交通","新大阪站"],["16:00","新大阪 → 关西机场","乘JR HARUKA约50分钟；加换乘时间","交通","关西国际机场"],["17:30","机场酒店办理入住","最好住机场岛内；确认T2接驳","住宿","Hotel Nikko Kansai Airport"],["20:00","收拾行李、早睡","明早08:00航班","休息","关西国际机场"]]},{"date":"12/26","week":"周六","city":"返程","title":"关西机场 → 香港","emoji":"✈️","area":"关西国际机场 T2","ev":[["05:00","起床、退房","以航司实际值机要求调整","住宿","关西国际机场"],["05:30","抵达关西机场 T2","从Aeroplaza搭机场免费接驳巴士到T2","交通","关西机场第二航站楼"],["08:00","飞机起飞","Peach：大阪 KIX → 香港 HKG","交通","关西国际机场"],["11:45","抵达香港","旅途结束 ❤️","休息","香港国际机场"]]}]};
+
+const CITY = {
+  '大阪':{jp:'大阪',kana:'おおさか',ro:'Ōsaka',lc:'var(--l-osaka)',lo:4,hi:12},
+  '京都':{jp:'京都',kana:'きょうと',ro:'Kyōto',lc:'var(--l-kyoto)',lo:2,hi:11},
+  '奈良':{jp:'奈良',kana:'なら',ro:'Nara',lc:'var(--l-nara)',lo:1,hi:11},
+  '河口湖':{jp:'河口湖',kana:'かわぐちこ',ro:'Kawaguchiko',lc:'var(--l-fuji)',lo:-4,hi:8},
+  '东京':{jp:'東京',kana:'とうきょう',ro:'Tōkyō',lc:'var(--l-tokyo)',lo:4,hi:12},
+  '东京→关西机场':{jp:'東京',kana:'とうきょう',ro:'Tōkyō → Kansai',lc:'var(--l-tokyo)',lo:4,hi:12,alias:'东京'},
+  '临空城':{jp:'りんくう',kana:'りんくうタウン',ro:'Rinkū Town',lc:'var(--l-rinku)',lo:5,hi:12},
+  '返程':{jp:'関空',kana:'かんさいくうこう',ro:'Kansai Airport',lc:'var(--l-kix)',lo:5,hi:12,alias:'临空城'}
+};
+const EV_CATS = {'景点':'var(--matcha)','交通':'var(--ai)','美食':'var(--yuzu)','住宿':'var(--l-kyoto)','购物':'var(--l-rinku)','约会':'var(--sakura)','休息':'var(--ink2)'};
+const X_CATS = [
+  {k:'food',n:'餐饮',i:'🍜',c:'var(--yuzu)'},
+  {k:'move',n:'交通',i:'🚃',c:'var(--ai)'},
+  {k:'stay',n:'住宿',i:'🏨',c:'var(--l-kyoto)'},
+  {k:'fun',n:'门票',i:'🎫',c:'var(--matcha)'},
+  {k:'shop',n:'购物',i:'🛍️',c:'var(--sakura)'},
+  {k:'misc',n:'其他',i:'✨',c:'var(--ink2)'}
+];
+const DEF_BUDGET = {A:[9000,13000,12000,10000,12000,23000,19000,21000,13000,5000],B:[9000,13000,12000,10000,12000,23000,18000,22000,16000,5000]};
+const DEF_CHECK = [
+  ['预订','确认往返机票已出票'],['预订','预订大阪难波酒店'],['预订','预订河口湖温泉旅馆（含晚餐、私人汤屋）'],
+  ['预订','预订 12/25 关西机场酒店'],['预订','预订新干线和河口湖高速巴士'],['预订','预订 12/24 圣诞晚餐'],
+  ['预订','方案 B：预订东京酒店和 SHIBUYA SKY'],
+  ['证件','护照有效期，填好 Visit Japan Web'],['证件','买旅行保险'],['证件','信用卡开通境外支付，换少量日元现金'],
+  ['行李','羽绒服、帽子、手套（河口湖会零下）'],['行李','转换插头（日本是两扁脚 100V）'],['行李','充电宝随身带，不能托运'],
+  ['行李','手机 eSIM 或流量卡'],['行李','手机钱包加 Suica / ICOCA'],['行李','下载离线地图'],['行李','好走的鞋']
+].map((x,i)=>({id:'c'+i,g:x[0],t:x[1],d:false}));
+const PHRASES = {
+  '餐厅':[
+    ['二人です','futari desu','两位'],['予約しています','yoyaku shite imasu','我们有预约'],
+    ['中国語のメニューはありますか','chūgokugo no menyū wa arimasu ka','有中文菜单吗？'],
+    ['おすすめは何ですか','osusume wa nan desu ka','有什么推荐的？'],['これをください','kore o kudasai','请给我这个'],
+    ['お会計お願いします','okaikei onegai shimasu','麻烦结账'],['〇〇アレルギーがあります','〇〇 arerugī ga arimasu','我对〇〇过敏']],
+  '购物':[
+    ['いくらですか','ikura desu ka','多少钱？'],['カードは使えますか','kādo wa tsukaemasu ka','可以刷卡吗？'],
+    ['免税できますか','menzei dekimasu ka','可以免税吗？'],['袋はいりません','fukuro wa irimasen','不用袋子'],
+    ['温めてください','atatamete kudasai','请帮我加热（便利店）'],['試着してもいいですか','shichaku shite mo ii desu ka','可以试穿吗？']],
+  '交通':[
+    ['駅はどこですか','eki wa doko desu ka','车站在哪里？'],['この電車は〇〇に行きますか','kono densha wa 〇〇 ni ikimasu ka','这趟车去〇〇吗？'],
+    ['次の駅はどこですか','tsugi no eki wa doko desu ka','下一站是哪里？'],['ここまでお願いします','koko made onegai shimasu','（给司机看地址）请到这里'],
+    ['荷物を預かってもらえますか','nimotsu o azukatte moraemasu ka','可以帮忙寄存行李吗？']],
+  '拍照·温泉':[
+    ['写真を撮ってもらえますか','shashin o totte moraemasu ka','可以帮我们拍张照吗？'],
+    ['富士山と一緒にお願いします','fujisan to issho ni onegai shimasu','请把富士山一起拍进去'],
+    ['貸切風呂を予約したいです','kashikiri-buro o yoyaku shitai desu','想预约私人汤屋'],
+    ['チェックインお願いします','chekku-in onegai shimasu','我们办理入住'],
+    ['タオルをもう一枚ください','taoru o mō ichimai kudasai','请再给一条毛巾']],
+  '紧急':[
+    ['助けてください','tasukete kudasai','请帮帮我'],['救急車をお願いします','kyūkyūsha o onegai shimasu','请叫救护车'],
+    ['病院に行きたいです','byōin ni ikitai desu','我想去医院'],['財布をなくしました','saifu o nakushimashita','我的钱包丢了'],
+    ['道に迷いました','michi ni mayoimashita','我迷路了'],['トイレはどこですか','toire wa doko desu ka','洗手间在哪里？']]
+};
+const SOS = [
+  ['110','报警（警察）'],['119','急救车 / 消防'],
+  ['050-3816-2787','Japan Visitor Hotline，日本观光局 24 小时，可讲中文'],
+  ['+86-10-12308','中国外交部全球领事保护热线（中国公民）'],
+  ['+852 1868','香港入境处求助热线（香港居民）']
+];
+const NEAR = [['🍜','附近美食','レストラン'],['☕','咖啡甜品','カフェ'],['🏪','便利店','コンビニ'],['🏧','能取现的 ATM','セブン銀行 ATM'],['💊','药妆店','ドラッグストア'],['🚻','洗手间','公衆トイレ']];
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const yen = n => '¥' + Math.round(n).toLocaleString('en-US');
+const pad = n => String(n).padStart(2,'0');
+const mapsQ = q => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+const mapsDir = q => 'https://www.google.com/maps/dir/?api=1&travelmode=transit&destination=' + encodeURIComponent(q);
+function lsGet(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e){ return null; } }
+function lsSet(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,2600); }
+function twoTap(btn, fn, label){
+  if (btn.dataset.armed){ fn(); return; }
+  const orig = btn.textContent; btn.dataset.armed='1'; btn.classList.add('armed'); btn.textContent = label || '再点一次删除';
+  setTimeout(()=>{ if(btn.isConnected){ delete btn.dataset.armed; btn.classList.remove('armed'); btn.textContent=orig; } }, 3000);
+}
+
+/* ---------- state ---------- */
+const LS_DATA='jp-pocket-2026-data', LS_UI='jp-pocket-2026-ui';
+function defSettings(){ return {plan:'A', names:['熊熊','兔兔'], home:'CNY', rate:{CNY:0.048, HKD:0.052}, budgets:structuredClone(DEF_BUDGET)}; }
+function mergeSettings(o){
+  const d = defSettings(); o = o || {};
+  return {
+    plan: o.plan==='B' ? 'B' : 'A',
+    names: Array.isArray(o.names) && o.names.length===2 ? o.names.map((n,i)=>String(n||d.names[i]).slice(0,8)) : d.names,
+    home: o.home==='HKD' ? 'HKD' : 'CNY',
+    rate: {CNY:+o.rate?.CNY>0 ? +o.rate.CNY : d.rate.CNY, HKD:+o.rate?.HKD>0 ? +o.rate.HKD : d.rate.HKD},
+    budgets: {A: o.budgets?.A?.length===10 ? o.budgets.A.map(Number) : d.budgets.A, B: o.budgets?.B?.length===10 ? o.budgets.B.map(Number) : d.budgets.B}
+  };
+}
+let S = defSettings(), DAYS = {}, CHECK = null, EXP = [];
+let db = null, mode = 'connecting', readOnly = false;
+const ui = {tab:'home', day:null, phraseGroup:'餐厅', expCat:'food', editing:null, phrase:null};
+Object.assign(ui, (()=>{ const u=lsGet(LS_UI)||{}; return {tab:u.tab||'home', phraseGroup:u.phraseGroup||'餐厅'}; })());
+if (/^#(home|plan|money|list|tools)$/.test(location.hash)) ui.tab = location.hash.slice(1);
+const saveUI = () => lsSet(LS_UI, {tab:ui.tab, phraseGroup:ui.phraseGroup});
+
+function events(plan, i){
+  const k = plan+'-'+i;
+  if (Array.isArray(DAYS[k])) return DAYS[k];
+  return PLANS[plan][i].ev.map((e,j)=>({id:k+'-'+j, time:e[0], title:e[1], note:e[2], category:e[3], place:e[4], done:false}));
+}
+const meta = i => PLANS[S.plan][i];
+const checks = () => CHECK || DEF_CHECK;
+const rate = () => S.rate[S.home];
+const homeFmt = n => S.home==='HKD' ? 'HK$' + (n).toFixed(n<100?1:0) : (n).toFixed(n<100?1:0) + ' 元';
+const dayDone = (plan,i) => { const l=events(plan,i); return l.length>0 && l.every(e=>e.done); };
+
+/* Japan time */
+const T0 = Date.UTC(2026,11,17);
+function now(){
+  const n = new Date(Date.now() + 9*36e5);
+  const mid = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());
+  const idx = Math.round((mid - T0)/864e5);
+  return {idx, hm: pad(n.getUTCHours())+':'+pad(n.getUTCMinutes()), phase: idx<0 ? 'before' : idx>9 ? 'after' : 'during'};
+}
+const autoDay = () => { const p=now(); return p.phase==='during' ? p.idx : p.phase==='after' ? 9 : 0; };
+const curDay = () => ui.day ?? autoDay();
+
+/* ---------- writes ---------- */
+/* Everything lives on this phone. Each piece carries a timestamp (TS) and deleted
+   expenses leave a tombstone (TOMB), so two phones can swap a sync code and merge:
+   newer days / settings / checklist win, expenses are combined. */
+let TS = {settings:0, checklist:0, days:{}}, TOMB = {}, lastSync = 0;
+let saveOk = true;
+function put(path, data){
+  const t = Date.now();
+  if (path==='trip/settings') TS.settings = t;
+  else if (path==='trip/checklist') TS.checklist = t;
+  else if (path.startsWith('days/')) TS.days[path.slice(5)] = t;
+  saveLocal();
+}
+function drop(path){
+  const t = Date.now();
+  if (path.startsWith('days/')) TS.days[path.slice(5)] = t;
+  else if (path.startsWith('expenses/')) TOMB[path.slice(9)] = t;
+  saveLocal();
+}
+function saveLocal(){
+  try { localStorage.setItem(LS_DATA, JSON.stringify({S, DAYS, CHECK, EXP, TS, TOMB, lastSync})); saveOk = true; }
+  catch(e){ saveOk = false; toast('这台手机没能保存，记得用「同步」把数据发出去备份'); }
+  renderSync();
+}
+function guard(){ return true; }
+
+/* ---- sync code: compress → base64, so it can be pasted into WeChat ---- */
+const SYNC_PREFIX = 'JPTRIP1:';
+const b64 = buf => { let s=''; const a=new Uint8Array(buf); for (let i=0;i<a.length;i+=0x8000) s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000)); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+async function makeCode(){
+  const json = JSON.stringify({v:1, S, DAYS, CHECK, EXP, TS, TOMB});
+  if (window.CompressionStream){
+    try {
+      const buf = await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer();
+      return SYNC_PREFIX + 'z' + b64(buf);
+    } catch(e){}
+  }
+  return SYNC_PREFIX + 'j' + b64(new TextEncoder().encode(json));
+}
+async function readCode(text){
+  const m = String(text).replace(/\s+/g,'').match(/JPTRIP1:([zj])([A-Za-z0-9+/=]+)/);
+  if (!m) throw new Error('format');
+  const bytes = unb64(m[2]);
+  let json;
+  if (m[1]==='z'){
+    if (!window.DecompressionStream) throw new Error('old');
+    json = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+  } else json = new TextDecoder().decode(bytes);
+  const o = JSON.parse(json);
+  if (!o || o.v!==1 || !o.TS) throw new Error('format');
+  return o;
+}
+function mergeIn(o){
+  let changed = 0;
+  if ((o.TS.settings||0) > TS.settings){ S = mergeSettings(o.S); TS.settings = o.TS.settings; changed++; }
+  if ((o.TS.checklist||0) > TS.checklist && Array.isArray(o.CHECK)){ CHECK = o.CHECK; TS.checklist = o.TS.checklist; changed++; }
+  const od = o.TS.days || {};
+  Object.keys(od).forEach(k=>{
+    if (!/^[AB]-\d$/.test(k)) return;
+    if ((od[k]||0) > (TS.days[k]||0)){
+      if (o.DAYS && Array.isArray(o.DAYS[k])) DAYS[k] = o.DAYS[k]; else delete DAYS[k];
+      TS.days[k] = od[k]; changed++;
+    }
+  });
+  Object.entries(o.TOMB||{}).forEach(([id,t])=>{ if(!TOMB[id] || TOMB[id]<t) TOMB[id]=t; });
+  const have = new Set(EXP.map(x=>x.id));
+  (Array.isArray(o.EXP)?o.EXP:[]).forEach(x=>{ if (x && x.id && +x.amt>0 && !have.has(x.id)){ EXP.push(x); changed++; } });
+  const before = EXP.length; EXP = EXP.filter(x=>!TOMB[x.id]); changed += before-EXP.length;
+  return changed;
+}
+async function shareCode(){
+  let code;
+  try { code = await makeCode(); } catch(e){ toast('生成同步码失败了，再试一次'); return; }
+  $('syncOut').value = code; $('syncOutWrap').hidden = false;
+  lastSync = Date.now(); saveLocal();
+  if (navigator.share){
+    try { await navigator.share({text: code}); toast('发给对方后，让 TA 在「同步」里粘贴'); return; } catch(e){ if (e && e.name==='AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(code); toast('同步码已复制，去微信粘贴给对方'); }
+  catch(e){ $('syncOut').select(); toast('长按下面的框，全选后复制'); }
+}
+async function importCode(){
+  const text = $('syncIn').value;
+  if (!text.trim()){ toast('先把对方发来的同步码粘贴进来'); $('syncIn').focus(); return; }
+  try {
+    const o = await readCode(text);
+    const n = mergeIn(o); saveLocal(); render(); $('syncIn').value = '';
+    toast(n ? `合并好了，更新了 ${n} 处` : '两边已经一样，没有要更新的');
+  } catch(e){
+    toast(e.message==='old' ? '这台手机的系统太旧，请让对方升级后再发' : '这段内容不是同步码，请完整复制对方发来的整段文字');
+  }
+}
+
+function saveDay(i, list){
+  const k = S.plan+'-'+i;
+  DAYS[k] = list; put('days/'+k, {events:list}); render();
+}
+function saveSettings(){ put('trip/settings', S); render(); }
+function saveChecks(list){ CHECK = list; put('trip/checklist', {items:list}); render(); }
+
+/* ---------- render: safe innerHTML (don't wipe a field someone is typing in) ---------- */
+let pending = false;
+function setHTML(el, html){
+  const a = document.activeElement;
+  if (a && el.contains(a) && a.matches('input:not([type=checkbox]):not([type=radio]),textarea,select')){ pending = true; return; }
+  if (el._h !== html){ el.innerHTML = html; el._h = html; }
+}
+document.addEventListener('focusout', ()=>setTimeout(()=>{ if(pending){ pending=false; render(); } }, 0));
+
+function render(){
+  renderSync(); renderHome(); renderPlan(); renderMoney(); renderList(); renderToolsLive();
+}
+
+function renderSync(){
+  const el=$('sync'), t=$('syncText');
+  el.className = 'sync';
+  if (!saveOk){ t.textContent='没保存上'; el.classList.add('warn'); return; }
+  const ago = lastSync ? Math.floor((Date.now()-lastSync)/864e5) : null;
+  t.textContent = ago===null ? '同步' : ago===0 ? '今天同步过' : ago+' 天前同步';
+  el.classList.add(ago!==null && ago<2 ? 'ok' : 'warn');
+}
+function explainSync(){ showTab('tools'); setTimeout(()=>$('syncCard').scrollIntoView({block:'start'}),30); }
+
+/* ---------- 今天 ---------- */
+function renderHome(){
+  const p = now(), plan = S.plan, days = PLANS[plan];
+  const doneDays = days.filter((_,i)=>dayDone(plan,i)).length;
+  let pass;
+  if (p.phase==='before'){
+    const left = -p.idx;
+    pass = `<div class="pass"><div class="row"><div><div class="lbl">距离出发</div><div class="big">${left}<small>天</small></div></div>
+      <div class="code">KIX<span>12/17 17:10 着</span></div></div>
+      <div class="sub">12月17日 – 26日 · 10 天 9 晚 · 方案 ${plan}${plan==='A'?' · 不去东京':' · 含东京'}</div>
+      <div class="perf"></div><div class="foot"><span>准备清单 ${checks().filter(c=>c.d).length}/${checks().length}</span><span>返程 12/26 08:00 KIX → HKG</span></div></div>`;
+  } else if (p.phase==='during'){
+    const m = days[p.idx];
+    pass = `<div class="pass"><div class="row"><div><div class="lbl">旅行第</div><div class="big">${p.idx+1}<small>/ 10 天</small></div></div>
+      <div class="code">${esc(CITY[m.city]?.jp||m.city)}<span>${esc(m.date)} ${esc(m.week)}</span></div></div>
+      <div class="sub">${esc(m.emoji)} ${esc(m.title)}</div>
+      <div class="prog"><b style="width:${(p.idx+1)*10}%"></b></div>
+      <div class="perf"></div><div class="foot"><span>已盖章 ${doneDays} 天</span><span>日本时间 ${p.hm}</span></div></div>`;
+  } else {
+    const spent = EXP.reduce((a,x)=>a+x.amt,0);
+    pass = `<div class="pass"><div class="row"><div><div class="lbl">旅程完成</div><div class="big">10<small>天</small></div></div><div class="code">♡<span>2026 冬</span></div></div>
+      <div class="sub">一起盖了 ${doneDays} 个章，一共花了 ${yen(spent)}。下次去哪？</div></div>`;
+  }
+  setHTML($('homePass'), pass);
+
+  const nx = upcoming();
+  let next = '';
+  if (nx){
+    const m = days[nx.d];
+    const label = p.phase==='during' && nx.d===p.idx ? '接下来' : `Day ${nx.d+1} · ${m.date}`;
+    next = `<div class="card next"><div class="h"><h2>${label}</h2><span class="fine">${esc(m.city)}</span></div>
+      <span class="when">${esc(nx.e.time)}</span> <span class="cat" style="--cc:${EV_CATS[nx.e.category]||'var(--ink2)'}">${esc(nx.e.category)}</span>
+      <h3>${esc(nx.e.title)}</h3><div class="fine" style="font-size:13px">${esc(nx.e.note)}</div>
+      <div class="acts"><a class="btn pri" href="${mapsDir(nx.e.place)}" target="_blank" rel="noopener">导航过去</a>
+      <button class="btn" type="button" onclick="jumpDay(${nx.d})">看这天全部</button></div></div>`;
+  }
+  setHTML($('homeNext'), next);
+
+  const open = checks().filter(c=>!c.d);
+  setHTML($('homeTodo'), open.length && p.phase==='before' ? `<div class="card todo"><div class="h"><h2>出发前还没搞定</h2><span class="fine">${open.length} 项</span></div>
+    <ul>${open.slice(0,4).map(c=>`<li>${esc(c.t)}</li>`).join('')}</ul>
+    <button class="btn sm" style="margin-top:8px" type="button" onclick="showTab('list')">打开清单</button></div>` : '');
+
+  // climate, drawn to one shared scale -6…14 °C
+  const MIN=-6, MAX=14, span=MAX-MIN, seen=new Set(), rows=[];
+  const todayCity = p.phase==='during' ? (CITY[days[p.idx].city]?.alias || days[p.idx].city) : null;
+  days.forEach(d=>{ const k = CITY[d.city]?.alias || d.city; if(!seen.has(k) && CITY[k]){ seen.add(k); rows.push(k); } });
+  const zero = (0-MIN)/span*100;
+  setHTML($('climate'), rows.map(k=>{ const c=CITY[k];
+    return `<div class="cl${k===todayCity?' today':''}"><span>${esc(k)}</span><div class="track"><span class="zero" style="left:${zero}%"></span><b style="left:${(c.lo-MIN)/span*100}%;width:${(c.hi-c.lo)/span*100}%"></b></div><span class="t">${c.lo}° ~ ${c.hi}°</span></div>`;
+  }).join('') + `<div class="scale"><span></span><div><span>${MIN}°</span><span>0°</span><span>${MAX}°</span></div><span></span></div>
+  <p class="fine">数字是往年平均，不是天气预报。<a href="https://www.google.com/search?q=${encodeURIComponent((todayCity||'大阪')+' 天气预报')}" target="_blank" rel="noopener">看${esc(todayCity||'大阪')}的实时预报</a></p>`);
+
+  const spent = EXP.reduce((a,x)=>a+x.amt,0), budget = S.budgets[plan].reduce((a,b)=>a+b,0);
+  setHTML($('homeMoney'), `<div class="card"><div class="h"><h2>花了多少</h2><button class="btn sm" type="button" onclick="showTab('money')">去记账</button></div>
+    <div class="tot"><div><div class="big">${yen(spent)}</div><div class="conv">≈ ${homeFmt(spent*rate())} · 预算 ${yen(budget)}</div></div></div>
+    <div class="meter"><b style="width:${Math.min(100,budget?spent/budget*100:0)}%;background:${spent>budget?'var(--shu)':'var(--matcha)'}"></b></div></div>`);
+}
+function upcoming(){
+  const p = now(); if (p.phase==='after') return null;
+  let d = p.phase==='before' ? 0 : p.idx, list = events(S.plan,d);
+  let j = p.phase==='during' ? list.findIndex(e=>!e.done && e.time>=p.hm) : list.findIndex(e=>!e.done);
+  while (j<0 && d<9){ d++; list=events(S.plan,d); j=list.findIndex(e=>!e.done); }
+  return j<0 ? null : {d, j, e:list[j]};
+}
+
+/* ---------- 行程 ---------- */
+function renderPlan(){
+  const plan=S.plan, i=curDay(), m=meta(i), list=events(plan,i), p=now();
+  document.querySelectorAll('#planSeg button').forEach(b=>b.classList.toggle('on', b.dataset.plan===plan));
+  setHTML($('strip'), PLANS[plan].map((d,k)=>`<button type="button" class="pill${k===i?' on':''}${p.phase==='during'&&k===p.idx?' today':''}" onclick="selectDay(${k})" aria-label="第${k+1}天 ${esc(d.date)}">
+    ${dayDone(plan,k)?'<i class="seal"></i>':''}<span class="d">DAY ${k+1}</span><span class="dt">${esc(d.date)}</span><span class="e">${esc(d.emoji)}</span></button>`).join(''));
+  const c = CITY[m.city] || {jp:m.city,kana:'',ro:'',lc:'var(--ai)'};
+  const prev = i>0 ? meta(i-1) : null, nxt = i<9 ? meta(i+1) : null;
+  setHTML($('sign'), `<div class="sign" style="--lc:${c.lc}">
+    <div class="meta"><span>DAY ${i+1} · 2026/${esc(m.date)}</span><span>${esc(m.week)}</span></div>
+    <div class="kana">${esc(c.kana)}</div><div class="kanji">${esc(c.jp)}</div><div class="ro">${esc(c.ro)}</div>
+    ${dayDone(plan,i)?`<div class="stamp" aria-label="这天全部完成"><span><b>済</b>${esc(m.date)}</span></div>`:''}
+    <div class="bar"></div>
+    <div class="nbrs"><button type="button" ${prev?'':'disabled'} onclick="selectDay(${i-1})">‹ ${prev?esc(prev.date+' '+prev.city):''}</button>
+    <button type="button" ${nxt?'':'disabled'} onclick="selectDay(${i+1})">${nxt?esc(nxt.date+' '+nxt.city):''} ›</button></div></div>`);
+  setHTML($('dayTitle'), `<h2>${esc(m.emoji)} ${esc(m.title)}</h2><p>今天主要在：${esc(m.area)}</p>
+    <div class="chips"><a class="chip" href="${mapsQ(m.area+' 附近 美食')}" target="_blank" rel="noopener">🍜 这附近吃什么</a>
+    <a class="chip" href="${mapsQ(m.area+' 附近 咖啡')}" target="_blank" rel="noopener">☕ 咖啡甜品</a>
+    <a class="chip" href="${mapsQ(m.area+' 附近 景点')}" target="_blank" rel="noopener">📷 周边景点</a></div>`);
+  const nowIdx = p.phase==='during' && p.idx===i ? list.findIndex(e=>!e.done && e.time>=p.hm) : -1;
+  setHTML($('tl'), list.length ? list.map((e,j)=>`<div class="ev${e.done?' done':''}${j===nowIdx?' now':''}">
+    <div class="tm">${esc(e.time)}</div>
+    <div class="bd"><div class="hd"><div><span class="cat" style="--cc:${EV_CATS[e.category]||'var(--ink2)'}">${esc(e.category)}</span><h3>${esc(e.title)}</h3></div>
+      <button type="button" class="tick rw" onclick="toggleDone(${j})" aria-pressed="${e.done}" aria-label="${e.done?'取消完成':'标记完成'}">✓</button></div>
+      ${e.note?`<div class="note">${esc(e.note)}</div>`:''}
+      <div class="acts4"><a class="btn pri" href="${mapsDir(e.place)}" target="_blank" rel="noopener">导航</a>
+      <a class="btn" href="${mapsQ(e.place)}" target="_blank" rel="noopener">地图</a>
+      <button class="btn rw" type="button" onclick="openEdit(${j})">编辑</button>
+      <button class="btn rw" type="button" onclick="twoTap(this,()=>delEvent(${j}),'确认删除')">删除</button></div></div></div>`).join('')
+    : `<div class="card empty"><b>🍃</b>这天还空着，点下面加点安排吧</div>`);
+  setHTML($('resetDay'), DAYS[plan+'-'+i] ? `<button class="btn sm rw" type="button" onclick="twoTap(this,()=>resetDay(${i}),'再点一次，恢复原始安排')">把这天恢复成原始安排</button>` : '');
+}
+function selectDay(i){ ui.day = Math.max(0,Math.min(9,i)); renderPlan(); }
+function jumpDay(i){ ui.day = i; showTab('plan'); }
+function setPlan(p){ if(!guard()) return; if(S.plan===p) return; S.plan=p; saveSettings(); toast(p==='A'?'切换到方案 A，另一半也会看到':'切换到方案 B，另一半也会看到'); }
+function toggleDone(j){ if(!guard()) return; const i=curDay(); const l=events(S.plan,i).map(e=>({...e})); l[j].done=!l[j].done; saveDay(i,l); if(l.every(e=>e.done)) toast('这天全部完成，盖章 ✿'); }
+function delEvent(j){ if(!guard()) return; const i=curDay(); const l=events(S.plan,i).map(e=>({...e})); l.splice(j,1); saveDay(i,l); toast('删掉了'); }
+function resetDay(i){ if(!guard()) return; const k=S.plan+'-'+i; delete DAYS[k]; drop('days/'+k); render(); toast('已恢复原始安排'); }
+function openEdit(j){
+  if(!guard()) return;
+  ui.editing = j; const e = j<0 ? {time:'12:00',title:'',category:'景点',place:'',note:''} : events(S.plan,curDay())[j];
+  $('editTitle').textContent = j<0 ? '给这天加一项' : '编辑这一项';
+  $('fTime').value=e.time; $('fCat').value=e.category; $('fTitle').value=e.title; $('fPlace').value=e.place; $('fNote').value=e.note;
+  $('editScrim').hidden=false; setTimeout(()=>$('fTitle').focus(),50);
+}
+$('fCat').innerHTML = Object.keys(EV_CATS).map(c=>`<option>${c}</option>`).join('');
+$('editForm').addEventListener('submit', ev=>{
+  ev.preventDefault();
+  const i=curDay(), title=$('fTitle').value.trim();
+  if(!title){ toast('写一下要做什么'); $('fTitle').focus(); return; }
+  const e={time:$('fTime').value||'12:00', title, category:$('fCat').value, place:$('fPlace').value.trim()||meta(i).area, note:$('fNote').value.trim()};
+  const l=events(S.plan,i).map(x=>({...x}));
+  if(ui.editing<0) l.push({...e, id:'u'+Date.now().toString(36), done:false}); else l[ui.editing]={...l[ui.editing], ...e};
+  l.sort((a,b)=>a.time.localeCompare(b.time));
+  closeSheets(); saveDay(i,l); toast('保存好了');
+});
+function closeSheets(){ $('editScrim').hidden=true; $('phraseScrim').hidden=true; try{ speechSynthesis.cancel(); }catch(e){} }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSheets(); });
+
+/* ---------- 记账 ---------- */
+$('catPick').innerHTML = X_CATS.map(c=>`<label><input type="radio" name="xcat" value="${c.k}" id="xc-${c.k}"${c.k===ui.expCat?' checked':''}><span>${c.i} ${c.n}</span></label>`).join('');
+$('catPick').addEventListener('change', e=>{ ui.expCat=e.target.value; });
+$('expDay').innerHTML = '<option value="-1">出发前</option>' + PLANS.A.map((d,i)=>`<option value="${i}">D${i+1} · ${d.date}</option>`).join('');
+$('expDay').value = String(now().phase==='before' ? -1 : autoDay());
+$('expAmt').addEventListener('input', ()=>{ const v=$('expAmt').value.replace(/[^\d]/g,''); $('expAmt').value = v ? (+v).toLocaleString('en-US') : ''; updExpConv(); });
+function updExpConv(){ const v=+$('expAmt').value.replace(/[^\d]/g,''); $('expConv').textContent = v ? '≈ '+homeFmt(v*rate()) : ''; }
+$('expForm').addEventListener('submit', ev=>{
+  ev.preventDefault(); if(!guard()) return;
+  const amt=+$('expAmt').value.replace(/[^\d]/g,'');
+  if(!amt){ toast('先填金额（日元）'); $('expAmt').focus(); return; }
+  const id='x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const x={amt, cat:ui.expCat, payer:+$('expPayer').value, day:+$('expDay').value, note:$('expNote').value.trim().slice(0,60), split:$('expSplit').checked, ts:Date.now()};
+  EXP=[...EXP.filter(e=>e.id!==id), {id,...x}]; put('expenses/'+id, x);
+  $('expAmt').value=''; $('expNote').value=''; updExpConv(); $('expAmt').blur(); $('expNote').blur();
+  render(); toast('记好了 '+yen(amt));
+});
+function delExp(id){ if(!guard()) return; EXP=EXP.filter(e=>e.id!==id); drop('expenses/'+id); render(); }
+function setBudget(i, v){ if(!guard()) return; const n=Math.max(0, +String(v).replace(/[^\d]/g,'')||0); if(S.budgets[S.plan][i]===n) return; S.budgets[S.plan][i]=n; saveSettings(); }
+
+function renderMoney(){
+  const [n0,n1]=S.names, plan=S.plan;
+  [...$('expPayer').options].forEach((o,i)=>o.textContent=S.names[i]);
+  [...$('expDay').options].forEach((o,k)=>{ if(k>0){ const d=PLANS[plan][k-1]; o.textContent=`D${k} · ${d.date} ${d.city}`; } });
+  $('expConvHint').textContent = `1 日元 ≈ ${rate()} ${S.home==='HKD'?'港币':'元'}`;
+  updExpConv();
+  const spent=EXP.reduce((a,x)=>a+x.amt,0), budget=S.budgets[plan].reduce((a,b)=>a+b,0);
+  const byCat=X_CATS.map(c=>({...c, v:EXP.filter(x=>x.cat===c.k).reduce((a,x)=>a+x.amt,0)})).filter(c=>c.v>0);
+  let bal=0; EXP.forEach(x=>{ if(x.split) bal += (x.payer===0 ? 1 : -1) * x.amt/2; });
+  const settle = Math.round(bal)===0 ? '两个人目前谁也不欠谁 ♡' : bal>0 ? `${esc(n1)} 应该给 ${esc(n0)} ${yen(bal)}（≈ ${homeFmt(bal*rate())}）` : `${esc(n0)} 应该给 ${esc(n1)} ${yen(-bal)}（≈ ${homeFmt(-bal*rate())}）`;
+  setHTML($('moneySum'), `<div class="card"><div class="h"><h2>一共花了</h2><span class="fine">方案 ${plan} 预算 ${yen(budget)}</span></div>
+    <div class="tot"><div><div class="big">${yen(spent)}</div><div class="conv">≈ ${homeFmt(spent*rate())}${budget?` · 已用预算 ${Math.round(spent/budget*100)}%`:''}</div></div></div>
+    <div class="meter">${spent ? byCat.map(c=>`<b style="width:${c.v/Math.max(spent,budget)*100}%;background:${c.c}"></b>`).join('') : ''}</div>
+    ${byCat.length ? `<div class="legend">${byCat.map(c=>`<span><i style="background:${c.c}"></i>${c.n} ${yen(c.v)}</span>`).join('')}</div>` : '<p class="fine">条形图的总长是预算，记账后会按类别填满。</p>'}
+    <div class="settle">${settle}</div></div>`);
+
+  if (!EXP.length){
+    setHTML($('expList'), `<div class="card empty"><b>🧾</b>还没有记录。上面填金额点「记下来」，另一半手机上会马上看到。</div>`);
+  } else {
+    const groups = {}; EXP.forEach(x=>{ (groups[x.day] = groups[x.day] || []).push(x); });
+    const keys = Object.keys(groups).map(Number).sort((a,b)=>b-a);
+    setHTML($('expList'), `<div class="card"><div class="h"><h2>明细</h2><span class="fine">${EXP.length} 笔</span></div>` + keys.map(k=>{
+      const g = groups[k].sort((a,b)=>b.ts-a.ts), sum=g.reduce((a,x)=>a+x.amt,0);
+      const head = k<0 ? '出发前' : `D${k+1} · ${PLANS[plan][k]?.date} ${PLANS[plan][k]?.city||''}`;
+      return `<div class="xgroup"><h3><span>${esc(head)}</span><span class="num">${yen(sum)}</span></h3>` + g.map(x=>{ const c=X_CATS.find(c=>c.k===x.cat)||X_CATS[5];
+        return `<div class="xrow"><div class="ic" style="--cc:${c.c}">${c.i}</div>
+          <div class="tx"><b>${esc(x.note||c.n)}</b><small>${esc(S.names[x.payer]||'')} 付 · ${x.split?'平摊':'自己的'}</small></div>
+          <div class="rt"><b>${yen(x.amt)}</b><button type="button" class="rw" onclick="twoTap(this,()=>delExp('${esc(x.id)}'),'确认删除')">删除</button></div></div>`; }).join('') + '</div>';
+    }).join('') + '</div>');
+  }
+
+  const byDay = Array.from({length:10},(_,i)=>EXP.filter(x=>x.day===i).reduce((a,x)=>a+x.amt,0));
+  setHTML($('budgetCard'), `<div class="card"><div class="h"><h2>每天预算</h2><span class="fine">两人合计，日元</span></div>` +
+    PLANS[plan].map((d,i)=>{ const b=S.budgets[plan][i], s=byDay[i];
+      return `<div class="brow"><div><b class="num">D${i+1}</b> <span class="fine">${esc(d.city)}</span></div>
+        <div><div class="bt"><b class="${s>b?'over':''}" style="width:${b?Math.min(100,s/b*100):(s?100:0)}%"></b></div><div class="sp">已花 ${yen(s)}</div></div>
+        <input id="bud${i}" inputmode="numeric" value="${b}" aria-label="第${i+1}天预算" onchange="setBudget(${i},this.value)" ${readOnly?'disabled':''}></div>`; }).join('') + '</div>');
+}
+
+/* ---------- 清单 ---------- */
+function renderList(){
+  const l = checks(), done = l.filter(c=>c.d).length;
+  setHTML($('listHead'), `<div class="card"><div class="h"><h2>出发准备</h2><span class="fine">${done}/${l.length} 完成</span></div>
+    <div class="meter" style="margin:4px 0 0"><b style="width:${l.length?done/l.length*100:0}%;background:var(--shu)"></b></div>
+    <div class="stamps" aria-label="每天的完成章">${PLANS[S.plan].map((d,i)=>`<span class="${dayDone(S.plan,i)?'on':''}" title="${esc(d.date)}">${i+1}</span>`).join('')}</div>
+    <p class="fine" style="margin-top:8px">下面一排是 10 天的行程章：一天的安排全部打勾，就会盖上红章。</p></div>`);
+  const groups = ['预订','证件','行李'];
+  l.forEach(c=>{ if(!groups.includes(c.g)) groups.push(c.g); });
+  setHTML($('listBody'), groups.map(g=>{ const items=l.filter(c=>c.g===g); if(!items.length) return '';
+    return `<div class="card cg"><h3>${esc(g)}</h3>${items.map(c=>`<div class="ci${c.d?' done':''}">
+      <input type="checkbox" id="ck-${esc(c.id)}" ${c.d?'checked':''} ${readOnly?'disabled':''} onchange="toggleCheck('${esc(c.id)}')"><label for="ck-${esc(c.id)}">${esc(c.t)}</label>
+      <button type="button" class="rw" onclick="twoTap(this,()=>delCheck('${esc(c.id)}'),'确认')">删除</button></div>`).join('')}</div>`; }).join(''));
+}
+function toggleCheck(id){ if(!guard()) return; saveChecks(checks().map(c=>c.id===id?{...c,d:!c.d}:{...c})); }
+function delCheck(id){ if(!guard()) return; saveChecks(checks().filter(c=>c.id!==id).map(c=>({...c}))); }
+$('checkAdd').addEventListener('submit', ev=>{
+  ev.preventDefault(); if(!guard()) return;
+  const t=$('ckText').value.trim(); if(!t){ $('ckText').focus(); return; }
+  saveChecks([...checks().map(c=>({...c})), {id:'u'+Date.now().toString(36), g:$('ckGroup').value, t, d:false}]);
+  $('ckText').value=''; toast('加好了');
+});
+
+/* ---------- 工具 ---------- */
+function renderToolsLive(){
+  const unit = S.home==='HKD' ? '港币' : '元';
+  $('cvSym').textContent = S.home==='HKD' ? 'HK$' : '≈';
+  $('cvUnit').textContent = unit;
+  $('rateLabel').textContent = `1 日元 = ? ${unit}`;
+  $('rateNote').textContent = `参考汇率 1 日元 ≈ ${rate()} ${unit}`;
+  $('rateLink').href = 'https://www.google.com/search?q=' + encodeURIComponent('JPY ' + S.home);
+  if (document.activeElement!==$('rateIn')) $('rateIn').value = rate();
+  if (document.activeElement!==$('nm0')) $('nm0').value = S.names[0];
+  if (document.activeElement!==$('nm1')) $('nm1').value = S.names[1];
+  $('cur'+S.home).checked = true;
+  [$('nm0'),$('nm1'),$('rateIn'),$('curCNY'),$('curHKD')].forEach(el=>el.disabled=readOnly);
+  if (document.activeElement!==$('cvHome')) convFrom('jpy');
+}
+function convFrom(src){
+  const r = rate();
+  if (src==='jpy'){ const v=parseFloat($('cvJpy').value.replace(/,/g,'')); $('cvHome').value = isFinite(v) ? +(v*r).toFixed(2) : ''; }
+  else { const v=parseFloat($('cvHome').value.replace(/,/g,'')); $('cvJpy').value = isFinite(v) ? Math.round(v/r) : ''; }
+}
+$('cvJpy').addEventListener('input', ()=>convFrom('jpy'));
+$('cvHome').addEventListener('input', ()=>convFrom('home'));
+$('cvQuick').innerHTML = [500,1000,3000,5000,10000,30000].map(v=>`<button type="button" onclick="$('cvJpy').value=${v};convFrom('jpy')">¥${v.toLocaleString('en-US')}</button>`).join('');
+$('nm0').addEventListener('change', e=>{ if(!guard()) return; S.names=[e.target.value.trim()||'旅伴1', S.names[1]]; saveSettings(); });
+$('nm1').addEventListener('change', e=>{ if(!guard()) return; S.names=[S.names[0], e.target.value.trim()||'旅伴2']; saveSettings(); });
+$('rateIn').addEventListener('change', e=>{ if(!guard()) return; const v=parseFloat(e.target.value); if(!(v>0)){ toast('汇率要填大于 0 的数字'); e.target.value=rate(); return; } S.rate={...S.rate,[S.home]:v}; saveSettings(); toast('汇率已更新'); });
+document.querySelectorAll('input[name=cur]').forEach(r=>r.addEventListener('change', e=>{ if(!guard()) return; S.home=e.target.value; saveSettings(); }));
+
+const canSpeak = 'speechSynthesis' in window;
+function renderPhrases(){
+  $('phGroups').innerHTML = Object.keys(PHRASES).map(g=>`<button type="button" class="${g===ui.phraseGroup?'on':''}" onclick="ui.phraseGroup='${g}';saveUI();renderPhrases()">${g}</button>`).join('');
+  $('phList').innerHTML = PHRASES[ui.phraseGroup].map((p,i)=>`<button type="button" onclick="showPhrase(${i})"><span class="ja">${esc(p[0])}</span><span class="zh">${esc(p[2])}</span><span class="go">放大</span></button>`).join('');
+}
+function showPhrase(i){
+  const p = PHRASES[ui.phraseGroup][i]; ui.phrase = p;
+  $('bpJa').textContent=p[0]; $('bpRo').textContent=p[1]; $('bpZh').textContent=p[2];
+  $('bpSpeak').hidden = !canSpeak; $('phraseScrim').hidden=false;
+}
+function speakCurrent(){
+  if(!ui.phrase) return;
+  try{
+    const u = new SpeechSynthesisUtterance(ui.phrase[0].replace(/〇〇/g,'')); u.lang='ja-JP'; u.rate=.9;
+    const v = speechSynthesis.getVoices().find(v=>/^ja/i.test(v.lang)); if(v) u.voice=v;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){ toast('这台手机读不出来，直接把屏幕给对方看就好'); }
+}
+$('near').innerHTML = NEAR.map(n=>`<a href="${mapsQ(n[2])}" target="_blank" rel="noopener"><span>${n[0]}</span>${n[1]}</a>`).join('');
+$('sos').innerHTML = SOS.map(s=>`<div><b>${esc(s[0])}</b><small>${esc(s[1])}</small><span class="act"><button class="btn sm" type="button" onclick="copyNum('${esc(s[0])}')">复制</button><a class="btn sm" href="tel:${esc(s[0].replace(/[^\d+]/g,''))}">拨打</a></span></div>`).join('');
+function copyNum(n){
+  try{ navigator.clipboard.writeText(n).then(()=>toast('已复制 '+n), ()=>toast('长按号码就能复制')); }catch(e){ toast('长按号码就能复制'); }
+}
+
+/* ---------- tabs ---------- */
+function showTab(t){
+  ui.tab = t; saveUI();
+  ['home','plan','money','list','tools'].forEach(k=>$('v-'+k).hidden = k!==t);
+  document.querySelectorAll('.dock button').forEach(b=>{ const on=b.dataset.tab===t; b.classList.toggle('on',on); b.setAttribute('aria-current', on?'page':'false'); });
+  window.scrollTo({top:0});
+  if (t==='plan'){ const pill=document.querySelector('.pill.on'); if(pill) pill.scrollIntoView({inline:'center',block:'nearest'}); }
+}
+
+/* ---------- boot ---------- */
+renderPhrases();
+render();
+showTab(ui.tab);
+setInterval(()=>{ renderHome(); }, 60000);
+
+(function load(){
+  const o = lsGet(LS_DATA);
+  if (o){
+    S = mergeSettings(o.S); DAYS = o.DAYS || {}; CHECK = Array.isArray(o.CHECK) ? o.CHECK : null;
+    EXP = Array.isArray(o.EXP) ? o.EXP : []; TS = Object.assign({settings:0,checklist:0,days:{}}, o.TS||{}); TOMB = o.TOMB || {}; lastSync = o.lastSync || 0;
+  }
+  render();
+})();
+if ('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
